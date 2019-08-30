@@ -12,17 +12,9 @@ module.exports = {
             return res.status(400).json( { error: 'Dev doesn\'t exist' });
         }
 
-        if(targetDev.likes.includes(loggedDev._id)){
-            console.log('DEU MATCH!!!');
-            
-        }
+ 
 
-        if (loggedDev.likes.includes(targetDev._id)) {
-            console.log('Dev already liked');
-            
-        } else {
-            loggedDev.likes.push(targetDev._id);
-        }
+        loggedDev.dislikes.push(targetDev._id);
 
         await loggedDev.save();
 
