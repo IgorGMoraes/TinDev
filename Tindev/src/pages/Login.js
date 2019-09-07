@@ -1,18 +1,22 @@
 import React from 'react';
-import { View, StyleSheet, Image, TextInput } from 'react-native'
+import { KeyboardAvoidingView, Platform, StyleSheet, Image, TextInput } from 'react-native';
 
 import logo from '../assets/logo.png'
 export default function Login(){
     return(
-        <View style={styles.container}>
+        <KeyboardAvoidingView 
+            behavior="padding"
+            enabled={Platform.OS === "ios"}
+            style={styles.container}
+        >
             <Image source = {logo} />
             <TextInput
                 placeholder="Digite seu usuário no GitHub"
                 placeholderTextColor='#777'
                 style={styles.input}
             />
-        </View>
-    )
+        </KeyboardAvoidingView>
+    );
 }
 
 const styles = StyleSheet.create({
@@ -21,7 +25,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#F5F5F5',
         justifyContent: 'center',
         alignItems: 'center',
-        padding: 30
+        padding: 30,
     },
 
     input: {
@@ -32,6 +36,6 @@ const styles = StyleSheet.create({
         borderColor: '#DDD',
         borderRadius: 4,
         marginTop: 20,
-        paddingHorizontal: 15, 
-    }
-})
+        paddingHorizontal: 15,
+    },
+});
