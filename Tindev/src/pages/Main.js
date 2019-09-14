@@ -1,33 +1,89 @@
-import React, { Component } from 'react'
-import { Text, Image, SafeAreaView, StyleSheet, View } from 'react-native'
+import React, { useEffect, useState } from 'react';
+import { Text, Image, SafeAreaView, StyleSheet, View } from 'react-native';
+import AsyncStorage from '@react-native-community/async-storage';
+
+import api from '../services/api';
 
 import logo from '../assets/logo.png'
 import like from '../assets/like.png'
 import dislike from '../assets/dislike.png'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 
-export default function Main() {
+export default function Main({ navigation }) {
+    const id = navigation.getParam('user')
+    const [users, setUsers] = useState([])
+    
+
+    useEffect(() =>{
+        async function loadUsers(){
+            const response = await api.get('/devs',{
+                headers: { 
+                    user: id,
+                }
+            })
+
+            setUsers(response.data)
+        }
+
+        loadUsers();
+    }, [id]);
+
+    async function handleLike(){
+        const [user, ...rest] = users;
+
+        await api.post(`/devs/${user._id}/likes`, null, {
+            headers: { user: id }
+        })
+
+        setUsers(rest)
+    }
+    async function handleDislike(){
+        const [user, ...rest] = users;
+
+        await api.post(`/devs/${user._id}/dislikes`, null, {
+            headers: { user: id }
+        })
+
+        setUsers(rest)
+    }
+
+    async function handleLogout(){
+        await AsyncStorage.clear();
+
+        navigation.navigate('Login');
+    }
+
     return (
         <SafeAreaView style={styles.container}>
-            <Image style={styles.logo} source={logo}/>
+            <TouchableOpacity onPress={handleLogout}>
+                <Image style={styles.logo} source={logo}/>
+            </TouchableOpacity>
             <View style={styles.cardsContainer}>
-                <View style={[styles.card]}>
-                    <Image style={styles.avatar}/>
-                    <View style={styles.footer}>
-                        <Text style={styles.name}>Igor Moraes</Text>
-                        <Text style={styles.bio} numberOfLines={3 } >Bio do desenvolvedor</Text>
-                    </View>
+                { users.length === 0 
+                    ? <Text style={styles.empty}>Não há mais desenvolvedores :(</Text>
+                    : (
+                        users.map((user, index) => (
+                            <View key={user._id} style={[styles.card, {zIndex: users.length - index }]}>
+                                <Image style={styles.avatar} source={{ uri: user.avatar }}/>
+                                <View style={styles.footer}>
+                                    <Text style={styles.name}>{user.name}</Text>
+                                    <Text style={styles.bio} numberOfLines={3 } >{user.bio}</Text>
+                                </View>
+                            </View>
+                        ))
+                    )
+                }
+            </View>
+            {users.length > 0 && (
+                <View style={styles.buttomContainer}>
+                    <TouchableOpacity style={styles.buttom} onPress={handleDislike}>
+                        <Image source={dislike}/>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.buttom} onPress={handleLike}>
+                        <Image source={like}/>
+                    </TouchableOpacity>
                 </View>
-            </View>
-            <View style={styles.buttomContainer}>
-                <TouchableOpacity style={styles.buttom}>
-                    <Image source={dislike}/>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.buttom}>
-                    <Image source={like}/>
-                </TouchableOpacity>
-            </View>
-            
+            )}
         </SafeAreaView>
     )
 }
@@ -42,6 +98,13 @@ const styles = StyleSheet.create({
 
     logo:{
         marginTop: 30,
+    },
+
+    empty:{
+        fontSize: 24,
+        fontWeight: 'bold',
+        alignSelf: 'center',
+        color: '#999'
     },
 
     cardsContainer:{
