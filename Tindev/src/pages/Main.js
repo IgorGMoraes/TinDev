@@ -1,17 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { Text, Image, SafeAreaView, StyleSheet, View } from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
+import io from 'socket.io-client'
 
 import api from '../services/api';
 
 import logo from '../assets/logo.png'
 import like from '../assets/like.png'
 import dislike from '../assets/dislike.png'
+import itsamatch from '../assets/itsamatch.png'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 
 export default function Main({ navigation }) {
     const id = navigation.getParam('user')
     const [users, setUsers] = useState([])
+    const [matchDev, setMatchDev] = useState(null)
     
 
     useEffect(() =>{
@@ -21,12 +24,21 @@ export default function Main({ navigation }) {
                     user: id,
                 }
             })
-
             setUsers(response.data)
         }
 
         loadUsers();
     }, [id]);
+
+    useEffect(() => {
+        const socket = io('http://192.168.1.106:5000', { 
+            query: { user: id}
+        })
+
+        socket.on('match', dev => {
+            setMatchDev(dev)
+        })
+    }, [id])
 
     async function handleLike(){
         const [user, ...rest] = users;
@@ -81,6 +93,16 @@ export default function Main({ navigation }) {
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.buttom} onPress={handleLike}>
                         <Image source={like}/>
+                    </TouchableOpacity>
+                </View>
+            )}
+            { matchDev && (
+                <View style={styles.matchContainer}>
+                    <Image source={itsamatch}/>
+                    <Image style={styles.matchAvatar} source={{ uri: matchDev.avatar }}/>
+                    <Text style={styles.matchName}>{matchDev.name}</Text>
+                    <TouchableOpacity onPress={() => setMatchDev(null)} style={styles.matchImage}>
+                        <Text style={styles.matchClose}>FECHAR</Text>
                     </TouchableOpacity>
                 </View>
             )}
@@ -171,6 +193,40 @@ const styles = StyleSheet.create({
             width: 0,
             height: 2,
         },
+    },
+
+    matchContainer:{
+        ... StyleSheet.absoluteFillObject,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    },
+
+    matchImage:{
+        height: 60,
+        resizeMode: 'contain'
+    },
+
+    matchAvatar:{
+        width: 150,
+        height: 150,
+        borderRadius: 75,
+        borderWidth: 5,
+        borderColor: 'white',
+        marginVertical: 30,
+    },
+
+    matchName:{
+        fontSize: 32,
+        color: 'white',
+        fontWeight: 'bold'
+    },
+
+    matchClose:{
+        marginTop: 30,
+        fontSize: 24,
+        color: 'white',
+        fontWeight: 'bold',
     }
 
 })
